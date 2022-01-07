@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <!-- 导入样式 -->
+    <!-- 导入样式 -->
+    <link rel="stylesheet" type="text/css" href="https://www.layuicdn.com/layui/css/layui.css"/>
+    <!-- 导入 jquery -->
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+</head>
+<body>
+
+
+<div class="layui-body">
+    <!-- 中间的内容区 -->
+    <fieldset class="layui-elem-field layui-field-title site-title">
+        <legend><a name="compatibility">员工信息</a></legend>
+    </fieldset>
+
+
+    <form class="layui-form" style="width: 350px; float:left;">
+        <div class="layui-form-item">
+            <label class="layui-form-label">员工ID</label>
+            <div class="layui-input-block">
+                <input type="text" name="empId" id="empId" placeholder="请输入员工ID" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">员工姓名</label>
+            <div class="layui-input-block">
+                <input type="text" name="empName" id="empName" required lay-verify="required" placeholder="请输入员工姓名"
+                       autocomplete="off"
+                       class="layui-input">
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">性别</label>
+            <div class="layui-input-inline">
+                <select name="gender" id="gender" lay-filter="aihao">
+                    <option value="">选择性别</option>
+                    <option value="M" selected>男</option>
+                    <option value="F">女</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">邮箱</label>
+            <div class="layui-input-block">
+                <input type="text" name="email" id="email" lay-verify="required" placeholder="请输入邮箱"
+                       autocomplete="off"
+                       class="layui-input">
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">部门名称</label>
+            <div class="layui-input-block" id="deptName">
+            </div>
+        </div>
+
+        <div class="layui-input-block">
+            <button class="layui-btn" lay-submit lay-filter="formxg">立即提交</button>
+            <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+        </div>
+
+    </form>
+
+</div>
+<div class="layui-footer">
+    <!-- 底部固定区域 -->
+</div>
+</div>
+
+</body>
+
+<!-- 导入layui js依赖 -->
+<script src=" https://www.layuicdn.com/layui/layui.js"></script>
+<script>
+    //JavaScript代码区域
+    layui.use(['element', 'jquery', 'layer', 'table', 'util'], function () {
+        var element = layui.element;
+        var jq = layui.jquery;
+        var table = layui.table;
+        var util = layui.util;
+        var form = layui.form;
+        formsubmits(form, jq);
+
+
+        //拼接数据到下拉宽
+
+        jq.get('/dept_list', {}, function (data) {
+            // 注意jquery返回的json数据!
+            console.log(data);
+            var l = '<select name="deptName"  lay-verify="required" id="deptId">';
+            l += '  <option value="">请选择</option>';
+            for (var i = 0; i < data.length; i++) {
+                l += '<option value="' + data.departments[i].deptId + '">' + data.departments[i].deptName + '</option>';
+            }
+            l += ' </select>';
+            jq("#deptName").html(l);
+            form.render(); //更新全部
+        }, 'json');
+
+
+    });
+
+    function formsubmits(form, $) {
+        form.on('submit(formxg)', function (data) {
+            var field = data.field;
+            console.log(data.field);//当前容器全部字段
+            console.log(data.field);//当前容器全部字段
+            console.log(data.field);//当前容器全部字段
+            if (field.empId == "") {
+                layer.msg('员工编号不能为空!', {icon: 5, time: 1000, anim: 6}, function () {
+                    $("input[name='empId']").focus();
+                    return false;
+                });
+            } else {
+                var empId = $('input[name="empId"]').val();
+                var empName = $('input[name="empName"]').val();
+                var gender = $("#gender").find("option:selected").val();
+                var email = $('input[name="email"]').val();
+                // var deptId = $('input[name="deptId"]').val();
+                var deptId = $("#deptId").find("option:selected").val();
+                //拼接成json
+
+                //todo 验证传入的参数是否为空
+
+                var obj = {
+                    "empId": empId,
+                    "empName": empName,
+                    "gender": gender,
+                    "email": email,
+                    "deptId": deptId,
+                };
+                console.log(obj);
+                $.ajax({
+                    url: '/add',
+                    type: 'POST',
+                    data: JSON.stringify(obj),
+                    dataType: 'json',
+                    contentType: 'application/json',
+                    success: function (data) {
+                        console.log(data);
+                        if (data.msg == "success") {
+                            layer.msg("添加成功");
+                            // parent.location.replace("/");
+                            window.setTimeout("parent.location.replace(\"/\")",3100);
+                        } else {
+                            layer.alert("添加失败!");
+                            window.setTimeout("parent.location.replace(\"/\")",3100);
+                        }
+                    }
+
+                });
+            }
+            return false;//阻止表单跳转.需要跳转去掉这段即可
+        });
+        return false;
+    }
+</script>
+</html>

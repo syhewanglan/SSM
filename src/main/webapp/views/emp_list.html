@@ -1,0 +1,497 @@
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<html>
+<head>
+    <title></title>
+    <link rel="stylesheet" type="text/css" href="https://www.layuicdn.com/layui/css/layui.css"/>
+    <!-- jQuery文件。务必在bootstrap.min.js 之前引入 -->
+    <script src="https://cdn.staticfile.org/jquery/2.1.1/jquery.min.js"></script>
+</head>
+<body>
+
+<fieldset class="layui-elem-field layui-field-title site-title">
+    <legend><a name="compatibility">员工管理</a></legend>
+</fieldset>
+
+<div>
+    <form class="layui-form" action="">
+        <div class="layui-inline">
+            <label class="layui-form-label">员工姓名</label>
+            <div class="layui-input-inline">
+                <input type="text" id="ename" name="ename" placeholder="请输入员工姓名"
+                       autocomplete="off" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-inline">
+            <label class="layui-form-label">部门</label>
+            <div class="layui-input-inline">
+                <select name="majorid" id="majorid">
+                    <option value="0"></option>
+                </select>
+            </div>
+        </div>
+        <div class="layui-inline">
+            <div class="layui-input-inline">
+                <button class="layui-btn" id="searchBtn" lay-submit
+                        lay-filter="formDemo" data-type="reload" style="margin-left: 15px">
+                    <i class="layui-icon layui-icon-search"></i> 查询
+                </button>
+                <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+            </div>
+        </div>
+    </form>
+
+</div>
+
+<!-- 放一个表格容器 -->
+<table id="demo" lay-filter="demo"></table>
+
+<!-- 数据表格工具条 -->
+<div id="tools" style="display:none;">
+<!--    <button id="quanxuan" class="layui-btn layui-btn-warm layui-btn-xs">全选</button>-->
+<!--    <button id="fanxuan" class="layui-btn layui-btn-xs">反选</button>-->
+    <button id="shanchu" class="layui-btn layui-btn-xs">多选删除</button>
+    <!--    <input type="text" name="searchEmpName"/>-->
+    <!--    <button class="layui-btn layui-btn-danger layui-btn-xs" lay-active="searchClick">名称搜索</button>-->
+    <button class="layui-btn layui-btn-danger layui-btn-xs" lay-active="addClick">信息添加</button>
+</div>
+
+<!-- 表格行工具按钮 -->
+<div id="gj" style="display:none;">
+    <button class="layui-btn layui-btn-danger layui-btn-xs"
+            lay-event="del">删除
+    </button>
+    <button class="layui-btn layui-btn-xs"
+            lay-event="edit">修改
+    </button>
+</div>
+
+
+<div style="display: none;" id="xgdiv">
+
+    <form class="layui-form" style="width: 350px; float:left;">
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">员工ID</label>
+            <div class="layui-input-block">
+                <input type="text" name="empId" required lay-verify="required" placeholder="请输入" autocomplete="off"
+                       class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">员工姓名</label>
+            <div class="layui-input-block">
+                <input type="text" name="empName" required lay-verify="required" placeholder="请输入" autocomplete="off"
+                       class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">性别</label>
+            <div class="layui-input-inline">
+                <select name="gender" id="gender" lay-filter="aihao">
+                    <option value="">选择性别</option>
+                    <option value="M" selected>男</option>
+                    <option value="F">女</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">邮箱</label>
+            <div class="layui-input-block">
+                <input type="text" name="email" required lay-verify="required" placeholder="请输入" autocomplete="off"
+                       class="layui-input">
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <label class="layui-form-label">部门名称</label>
+            <div class="layui-input-block" id="deptName">
+            </div>
+        </div>
+
+        <div>
+            <input type="hidden" name="id" id="id">
+        </div>
+
+        <div class="layui-input-block">
+            <button class="layui-btn" lay-submit lay-filter="formxg">立即提交</button>
+            <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+        </div>
+    </form>
+</div>
+
+
+
+
+<!-- 导入layui js依赖 -->
+<script src=" https://www.layuicdn.com/layui/layui.js"></script>
+
+
+<script>
+    //加载layui,初始化layui    layui.use(['模块1','模块2'],'回调')
+    layui.use(['jquery', 'element', 'form', 'table', 'layer', 'util'], function () {
+        //对表格对象进行赋值
+        var table = layui.table;
+        var $ = layui.jquery;
+        var util = layui.util;
+        var jq = layui.jquery;
+        var layer = layui.layer;
+        var form = layui.form;
+        //记录当前页数据的临时变量
+        var cookiePageArray = [];
+        //存储已选择数据集，用普通变量存储也行，就是一个缓存变量
+        layui.data('checked', null);
+
+        //获取下拉框部门
+        $.ajax({
+            url: '/dept_list',
+            type: 'get',
+            success: function (data) {
+                var data = data.departments;
+                $.each(data, function (index, item) {
+                    $('#majorid').append(
+                        new Option(item.deptName, item.deptId));// 下拉菜单里添加元素
+                });
+                layui.form.render("select");
+            }
+        });
+
+        //拼接数据到下拉宽
+        jq.get('/dept_list', {}, function (data) {
+            // 注意jquery返回的json数据!
+            console.log(data);
+            var l = '<select name="deptName"  lay-verify="required" id="deptId">';
+            l += '  <option value=""></option>';
+            for (var i = 0; i < data.length; i++) {
+                l += '<option value="' + data.departments[i].deptId + '">' + data.departments[i].deptName + '</option>';
+            }
+            l += ' </select>';
+            jq("#deptName").html(l);
+            form.render(); //更新全部
+        }, 'json');
+
+
+        formsubmits(form, $);
+        //创建表格参数
+        var obj = {
+            id: 'employees',//checkbox取值使用的
+            elem: '#demo'  //id选择器
+            , url: '/list'   //数据接口,某个Controller
+            , page: true //开启分页
+            , toolbar: '#tools' //开启头部工具条
+            , limit: 10  //每页显示多少条
+            , cols: [[ //表头  表格的标题列
+                {type: 'checkbox', fixed: 'left', LAY_CHECKED: false, filter: 'checkboxid'}
+                , {field: 'empId', title: '员工Id', width: 200, sort: true,}
+                , {field: 'empName', title: '员工姓名'}
+                , {
+                    field: 'gender', title: '性别', sort: true, templet: function (d) {
+                        return d.gender == 'M' ? "男" : "女"
+                    }
+                }
+                , {field: 'email', title: '邮箱'}
+                //table读取多级json
+                , {
+                    field: 'd.department.deptName',
+                    title: '部门',
+                    templet: '<div>{{d.department.deptName}}</div>'
+                }
+                , {toolbar: '#gj'}  //添加行工具
+            ]],
+
+            done: function (res, curr, count) {
+                //.假设你的表格指定的 id="sale-data"，找到框架渲染的表格
+                var tbl = $('#demo').next('.layui-table-view');
+                //记下当前页数据，Ajax 请求的数据集，对应你后端返回的数据字段
+                cookiePageArray = res.data;
+                //记录当前也选中的chechbox个数(判断全选使用的)
+                var len = 0;
+                //遍历当前页数据，对比已选中项中的 id
+                for (var index = 0; index < cookiePageArray.length; index++) {
+                    if (layui.data('checked', cookiePageArray[index]['id'])) {
+                        //逐个判断是否选中，如果已经选中就改变选中模式
+                        var i = cookiePageArray[index]['LAY_TABLE_INDEX'];
+                        var checkbox = $('.layui-table tr[data-index=' + i + '] input[type="checkbox"]');
+                        checkbox.prop('checked', true);
+                        checkbox.next().addClass('layui-form-checked');
+                        //为了设置全选的
+                        len++;
+                    }
+                }
+
+                console.log(this.limit + "=====" + len)
+                //设置全选checkbox的选中状态，只有改变LAY_CHECKED的值， table.checkStatus才能抓取到选中的状态
+                if (len === this.limit) {
+                    var checkboxAll = $('.layui-table-header th[data-field=0] input[type="checkbox"]');
+                    checkboxAll.prop('checked', true);
+                    checkboxAll.next().addClass('layui-form-checked');
+                }
+
+                //暂时只能这样渲染表单
+                form.render('checkbox');
+            }
+
+        };
+        //加载表格
+        table.render(obj);
+
+        table.on('checkbox(demo)', function (obj) {
+            // console.log(obj.type); //如果触发的是全选，则为：all，如果触发的是单选，则为：one
+            // console.log(obj); //如果触发的是全选，则为：all，如果触发的是单选，则为：one
+            //全选或单选数据集不一样
+            var data = 'one' === obj.type ? [obj.data] : cookiePageArray;
+            //遍历数据
+            $.each(data, function (index, item) {
+                //假设你数据中 id 是唯一关键字
+                // console.log(item);
+                if (obj.checked) {
+                    //.增加已选中项
+                    layui.data('checked', {
+                        key: item.id, value: item
+                    });
+                } else {
+                    //.删除
+                    layui.data('checked', {
+                        key: item.id, remove: true
+                    });
+                }
+            });
+            console.log(layui.data('checked'));
+        });
+
+        //点击查询按钮，重载表格
+        $('#searchBtn').on('click', function () {
+            table.reload('employees', {
+                url: '/search',
+                where: {
+                    empName: $('#ename').val() == "" ? null : $('#ename').val(),
+                    deptId: $('#majorid').val() == "" ? 0 : parseInt(('#majorid').val())
+                },
+                parseData: function (res) {
+                    console.log("搜索返回的res");
+                    console.log(res);
+                    return {
+                        "data": res.data,
+                        "code": res.code,
+                        "count": res.count
+                    }
+                }
+
+            });
+            return false;
+        });
+
+        $('#shanchu').on('click', function () {
+            var data = layui.data('checked');
+            console.log("data: ");
+            console.log(data);
+            var list = [];
+            $.each(data, function (index,item){
+                list.push(index);
+            });
+            console.log(list);
+            $.ajax({
+                url: '/deleteAll',
+                type:'delete',
+                data: JSON.stringify(list),
+                dataType: 'json',
+                contentType: 'application/json',
+                success: function (data) {
+                    console.log(data);
+                    if (data.msg == "success") {
+                        layer.alert("删除成功");
+                        window.setTimeout("parent.location.reload()",3100);
+                    } else {
+                        layer.alert("删除失败!");
+                        window.setTimeout("parent.location.reload()",3100);
+                    }
+                }
+            });
+        });
+
+
+        //监听头部工具事件：工具条的事件 :jquery代码
+        $("#quanxuan").click(function () {
+
+            form.on('checkbox(checkboxid)', function (data) {
+                console.log(data);
+                var child = $("input[name='type']");
+                child.each(function (index, item) {
+                    item.checked = data.elem.checked;
+                });
+                form.render('checkbox');
+            });
+
+            // var checkboxs = $('.layui-table-view tbody input[type="checkbox"]');
+            // checkboxs.each(function (index, item) {
+            //     item.checked = data.elem.checked;
+            //     console.log(item);
+            // });
+            //
+            // var checkStatus = layui.table.checkStatus('demo').data;
+            // console.log("checkStatus: ");
+            // console.log(checkStatus);
+        });
+
+
+        //工具条的事件
+        util.event('lay-active', {
+            addClick: function () {//点击添加
+                layer.open({
+                    title: "添加员工信息",
+                    //调整弹框的大小
+                    area: ['890px', '600px'],
+                    shadeClose: true,//点击旁边地方自动关闭
+                    shade: 0.6, //遮罩透明度
+                    //动画
+                    anim: 1,
+                    //弹出层的基本类型开页面1是弹出层,2是打开新的jsp页面
+                    type: 2,
+                    //刚才定义的弹窗页面
+                    content: ['/views/emp_add.html', 'no'] //这里content是一个URL，如果你不想让iframe出现滚动条，你还可以content: ['http://sentsin.com', 'no']
+                });
+            }
+        });
+
+
+        //监听行工具事件  给表格加上 lay-filter="test"
+        table.on('tool(demo)', function (obj) {
+            var data = obj.data;  //将行的数据进行赋值
+            console.log(data);
+            if (obj.event === 'del') { //点了删除按钮
+                var empId = data.empId;
+                $.ajax({
+                    url: '/delete?empId=' + empId,
+                    type: 'delete',
+                    success: function (data) {
+                        console.log(data);
+                        if (data.msg == "success") {
+                            layer.alert("删除成功");
+                            window.setTimeout("window.location.reload()",3100);
+                        } else {
+                            layer.alert("删除失败!");
+                            window.setTimeout("window.location.reload()",3100);
+                        }
+                    }
+                });
+
+            } else if (obj.event === 'edit') {
+                //点了修改按钮
+                var id = data.id;
+                var empId = data.empId;
+                var empName = data.empName;
+                var gender = data.gender;
+                var email = data.email;
+                var deptId = data.deptId;
+
+                $("#id").val(id);
+                $("input[name=empId]").val(empId);
+                $("input[name=empName]").val(empName);
+                $("input[name=email]").val(email);
+                // 回显下拉框数据,苦痛
+                //拼接数据到下拉宽
+                $("#gender").children("option").each(function () {
+                    if ($(this).val() == gender) {
+                        $(this).attr("selected", true);
+                        return false;
+                    }
+                });
+                $("#deptId").children("option").each(function () {
+                    if ($(this).val() == deptId) {
+                        $(this).attr("selected", true);
+                        return false;
+                    }
+                });
+                form.render(); //更新全部
+
+                //修改弹出层
+                layer.open({
+                    type: 1,
+                    content: $("#xgdiv"), //这里content是一个DOM，注意：最好该元素要存放在body最外层，否则可能被其它的相对元素所影响
+                    area: ['850px', '600px'],
+                    skin: 'layui-layer-molv',
+                    title: '员工信息修改'
+                });
+
+            }
+
+        });
+    });
+
+    function formsubmits(form, $) {
+
+        form.on('submit(formxg)', function (data) {
+            var id = $("#id").val();
+            var empId = $("input[name=empId]").val();
+            var empName = $("input[name=empName]").val();
+            var gender = $("#gender").find("option:selected").val();
+            var email = $("input[name=email]").val();
+            var deptId = $("#deptId").find("option:selected").val();
+            //拼接成json
+            var obj = {
+                "id": id,
+                "empId": empId,
+                "empName": empName,
+                "gender": gender,
+                "email": email,
+                "deptId": deptId
+            };
+            console.log(obj);
+            $.ajax({
+                url: '/update',
+                type: 'put',
+                data: JSON.stringify(obj),
+                dataType: 'json',
+                contentType: 'application/json',
+                success: function (data) {
+                    if (data.msg == "success") {
+                        layer.alert("修改成功");
+                        window.setTimeout("parent.location.reload()",3100);
+                    } else {
+                        layer.alert("修改失败!");
+                        window.setTimeout("parent.location.reload()",3100);
+                    }
+                }
+
+            });
+            return false;//阻止表单跳转.需要跳转去掉这段即可
+        });
+        return false;
+    }
+
+
+</script>
+
+<style type="text/css">
+    hr {
+        width: 80%;
+        margin: 10px auto;
+        height: 1px;
+        background-image: linear-gradient(
+                to right,
+                rgba(255, 255, 255, 0),
+                cyan,
+                rgba(0, 0, 0, 0)
+        );
+    }
+    .footer {
+        height: 50px;	/* 重点 */
+        /*margin-top: -0px;	!* 重点 *!*/
+        clear: both;
+        text-align: center;
+    }
+
+</style>
+
+<hr/>
+<div id="footer" class="footer">
+    <span>
+        @syhewanglan.Copyright &copy;2019-2022
+    </span>
+</div>
+
+</body>
+
+
+
+</html>
