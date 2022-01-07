@@ -1,11 +1,11 @@
 # SSM
 practice for Mr.Wang の assignment
 
-#URL
+## 项目的URL
 https://github.com/syhewanglan/SSM/
 
 
-##技术 
+## 技术 
 layui+ajax+SSM
 
 
@@ -13,7 +13,6 @@ layui+ajax+SSM
 **利用ajax进行数据的异步处理**
 **利用SSM 完成后端工作**
 
-##后续更新
-
+## 后续更新
 
 **有时间用django或者flask复现一个**
