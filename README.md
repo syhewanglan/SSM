@@ -1,7 +1,11 @@
 # SSM
 practice for Mr.Wang の assignment
 
-##技术
+#URL
+https://github.com/syhewanglan/SSM/
+
+
+##技术 
 layui+ajax+SSM
 
 
